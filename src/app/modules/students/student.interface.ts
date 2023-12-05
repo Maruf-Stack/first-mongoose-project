@@ -1,4 +1,4 @@
-import { Model } from 'mongoose'
+import { Model, Types } from 'mongoose'
 
 export interface TGuardian {
   father: string
@@ -13,7 +13,7 @@ export interface Username {
 }
 export interface TStudent {
   id: string
-  password: string
+  user: Types.ObjectId
   name: Username
   gender: 'male' | 'female'
   dateofbirth?: string
@@ -30,7 +30,7 @@ export interface TStudent {
     contact: string
   }
   profileImg?: string
-  isActive: 'active' | 'block'
+  admissionSemester: Types.ObjectId
   isDeleted: boolean
 }
 

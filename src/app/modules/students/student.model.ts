@@ -6,8 +6,7 @@ import {
   Username,
 } from './student.interface'
 import validator from 'validator'
-import bcrypt from 'bcrypt'
-import config from '../../config'
+import { strictObject, string } from 'zod'
 
 const userSchema = new Schema<Username>({
   firstname: { type: String, required: true },
@@ -26,11 +25,13 @@ const guardianSchema = new Schema<TGuardian>({
 const studentSchema = new Schema<TStudent, StudentModel>(
   {
     id: { type: String, required: true, unique: true },
-    password: {
-      type: String,
-      required: true,
-      maxlength: [20, 'password cannot be more than 20'],
+    user: {
+      type: Schema.Types.ObjectId,
+      required: [true, 'user id  is required'],
+      unique: true,
+      ref: 'Users',
     },
+
     name: {
       type: userSchema,
       required: true,
@@ -72,10 +73,9 @@ const studentSchema = new Schema<TStudent, StudentModel>(
       contact: { type: String },
     },
     profileImg: { type: String },
-    isActive: {
-      type: String,
-      enum: ['active', 'block'],
-      default: 'active',
+    admissionSemester: {
+      type: Schema.Types.ObjectId,
+      ref: 'AcademicSemester',
     },
     isDeleted: {
       type: Boolean,
@@ -84,24 +84,6 @@ const studentSchema = new Schema<TStudent, StudentModel>(
   },
   { toJSON: { virtuals: true } },
 )
-
-//pre save middleware
-studentSchema.pre('save', async function (next) {
-  //hashing the password
-  // eslint-disable-next-line @typescript-eslint/no-this-alias
-  const user = this
-  user.password = await bcrypt.hash(
-    user.password,
-    Number(config.bcrypt_salt_round),
-  )
-  next()
-})
-
-//post save middleware
-studentSchema.post('save', async function (doc, next) {
-  doc.password = ''
-  next()
-})
 
 //query middleware
 studentSchema.pre('findOne', async function (next) {
@@ -117,7 +99,7 @@ studentSchema.pre('aggregate', async function (next) {
 //virtual
 
 studentSchema.virtual('fullname').get(function () {
-  return `${this.name.firstname} ${this.name.lastname}`
+  return `${this?.name?.firstname} ${this?.name?.lastname}`
 })
 //creating a custom static method
 
